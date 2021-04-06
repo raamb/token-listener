@@ -8,6 +8,8 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+venv/
+node_modules/
 build/
 develop-eggs/
 dist/
@@ -25,6 +27,8 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+package-lock.json
+
 MANIFEST
 
 # PyInstaller
