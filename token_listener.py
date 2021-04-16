@@ -1,5 +1,6 @@
 import os
 import time
+import sys, getopt
 
 from blockchain_util import BlockChainUtil, ContractType
 from repository import Repository
@@ -14,6 +15,7 @@ class BlockchainEventProcessor():
 
     def _get_base_contract_path(self):
         pass
+        return ""
 
     def _get_contract(self, net_id=1):
         if not self.__contract:
@@ -118,8 +120,27 @@ class TokenEventProcessor(BlockchainEventProcessor):
         self.process_events(events)
         return events
 
+def print_usage():
+    print("USAGE: token_listener.py -s <starting-blocknumber>")
 
-snapshot_start = time.process_time()
-tp = TokenEventProcessor(INFURA_URL)
-tp.read_events(12161635)
-print(f"{(time.process_time() - snapshot_start)} seconds taken")
+argv = sys.argv[1:]
+#print(argv)
+if len(argv) < 1:
+    print_usage()
+    sys.exit()
+
+try:
+    snapshot_start = time.process_time()
+    opts, args = getopt.getopt(argv,"h:s:",["starting-blocknumber="])
+    for opt, arg in opts:
+        if opt == '-h':
+            print_usage()
+            sys.exit()
+        elif opt in ("-s", "--starting-blocknumber"):
+            print("Processing from "+str(int(arg)))
+            tp = TokenEventProcessor(INFURA_URL)
+            tp.read_events(int(arg))
+            print(f"{(time.process_time() - snapshot_start)} seconds taken")  
+except getopt.GetoptError:
+    print_usage()
+    sys.exit()
