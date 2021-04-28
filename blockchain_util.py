@@ -8,13 +8,13 @@ from web3 import Web3
 from websockets.exceptions import ConnectionClosed
 
 
-
 class ContractType(Enum):
     REGISTRY = "REGISTRY"
     MPE = "MPE"
     RFAI = "RFAI"
     TokenStake = "TokenStake"
     SingularityNetToken = "SingularityNetToken"
+    TokenBatchTransfer = "TokenBatchTransfer"
 
 
 class BlockChainUtil(object):
@@ -30,7 +30,11 @@ class BlockChainUtil(object):
             raise Exception("Only HTTP_PROVIDER and WS_PROVIDER provider type are supported.")
         self.web3_object = Web3(self.provider)
 
+    def get_code(self,address):
+        return self.web3_object.eth.get_code(Web3.toChecksumAddress(address))
+
     def load_contract(self, path):
+        print(path)
         with open(path) as f:
             contract = json.load(f)
         return contract
@@ -80,16 +84,14 @@ class BlockChainUtil(object):
     def sign_transaction_with_private_key(self, private_key, transaction_object):
         return self.web3_object.eth.account.signTransaction(transaction_object, private_key).rawTransaction
 
-    def create_transaction_object(self, *positional_inputs, method_name, address, contract_path, contract_address_path,
-                                  net_id, gas=None):
+    def create_transaction_object(self, net_id, contract_instance, method_name, address, *positional_inputs, gas=None):
         nonce = self.get_nonce(address=address)
-        self.contract = self.load_contract(path=contract_path)
-        self.contract_address = self.read_contract_address(net_id=net_id, path=contract_address_path, key='address')
-        self.contract_instance = self.contract_instance(contract_abi=self.contract, address=self.contract_address)
+
         print(f"gas_price :: {self.web3_object.eth.gasPrice}")
         print(f"nonce :: {nonce}")
         print(f"positional_inputs :: {positional_inputs}")
-        gas_price = 3 * (self.web3_object.eth.gasPrice)
+        gas_price = (2 * (self.web3_object.eth.gasPrice))
+        print(f"gas_price :: {gas_price}")
         options = {
             "from": address,
             "nonce": nonce,
@@ -98,7 +100,7 @@ class BlockChainUtil(object):
         }
         if gas is not None:
             options.update({"gas": gas})
-        transaction_object = getattr(self.contract_instance.functions, method_name)(
+        transaction_object = getattr(contract_instance.functions, method_name)(
             *positional_inputs).buildTransaction(options)
         return transaction_object
 
@@ -119,6 +121,9 @@ class BlockChainUtil(object):
             self.reset_web3_connection()
         return self.web3_object.eth.blockNumber
 
+    def get_transaction(self, transaction_hash):
+        return self.web3_object.eth.get_transaction(transaction_hash)
+
     def get_transaction_receipt_from_blockchain(self, transaction_hash):
         return self.web3_object.eth.getTransactionReceipt(transaction_hash)
 
@@ -134,7 +139,9 @@ class BlockChainUtil(object):
         elif contract_name == ContractType.TokenStake.value:
             json_file = "TokenStake.json"
         elif contract_name == ContractType.SingularityNetToken.value:
-            json_file = "SingularityNetToken.json"            
+            json_file = "SingularityNetToken.json"  
+        elif contract_name == ContractType.TokenBatchTransfer.value:
+            json_file = "TokenBatchTransfer.json"                        
         else:
             raise Exception("Invalid contract Type {}".format(contract_name))
 
