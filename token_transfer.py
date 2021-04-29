@@ -84,7 +84,7 @@ class TokenTransfer(BlockchainHandler):
         limit_query = self._query + " LIMIT " + str(self._batchsize) + " OFFSET " + str(self._offset)
         token_holders = self._repository.execute(limit_query)
         for holder in token_holders:
-            address = holder['address']
+            address = holder['wallet_address']
             balance_in_cogs = holder['balance_in_cogs']
             self._balances[address] = balance_in_cogs
             print(f"Transferring {balance_in_cogs} cogs to {address}")
