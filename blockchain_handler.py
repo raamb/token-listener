@@ -30,7 +30,13 @@ class BlockchainHandler():
 
     def _await_transaction(self, transaction_hash):
         while True:
-            thash = self._blockchain_util.get_transaction(transaction_hash)
+            try:
+                thash = self._blockchain_util.get_transaction(transaction_hash)
+            except Exception:
+                print(f"Waiting for {transaction_hash} to come thru")
+                time.sleep(1)
+                continue
+            
             if 'blockHash' in thash and thash['blockHash'] is not None:
                 print(f"{thash} mined successfully")
                 break
