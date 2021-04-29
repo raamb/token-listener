@@ -7,14 +7,18 @@ from web3 import Web3
 
 class BlockchainHandler():
     def __init__(self, ws_provider, repository=None):
-        self._blockchain_util = BlockChainUtil("WS_PROVIDER", ws_provider)
+        self._ws_provider = ws_provider
         self.__contract = None
         self._contract_name = ""
         self._contract_address = "0x0"
+        self._initialize_blockchain()
 
     def _get_base_contract_path(self):
         pass
         return ""
+
+    def _initialize_blockchain(self):
+        self._blockchain_util = BlockChainUtil("WS_PROVIDER", self._ws_provider)
 
     def _get_contract(self, net_id):
         if not self.__contract:
@@ -36,7 +40,7 @@ class BlockchainHandler():
                 print(f"Waiting for {transaction_hash} to come thru")
                 time.sleep(1)
                 continue
-            
+
             if 'blockHash' in thash and thash['blockHash'] is not None:
                 print(f"{thash} mined successfully")
                 break

@@ -63,6 +63,19 @@ class TokenTransfer(BlockchainHandler):
             if not self._dry_run:
                 self._agi_handler.deposit(address,TOTAL_COGS_TO_TRANSFER, self._net_id)
 
+    def _transfer_tokens_impl(self, *positional_inputs):
+        try:
+            transaction_hash = self._make_trasaction(self._net_id, TRANSFERER_ADDRESS, TRANSFERER_PRIVATE_KEY, *positional_inputs, method_name="batchTransfer")
+            print(f"transaction hash {transaction_hash} generated for batchTransfer")
+        except Exception as e:
+            error_message = str(e)
+            if('nonce too low' in error_message):
+                print("Nonce error - retrying")
+                self._initialize_blockchain()
+                self._transfer_tokens_impl(positional_inputs)
+        self._await_transaction(transaction_hash)
+        return transaction_hash
+    
     def _transfer_tokens(self):
         addresses = []
         amounts = []
@@ -72,12 +85,7 @@ class TokenTransfer(BlockchainHandler):
         
         positional_inputs = (addresses, amounts)
         if not self._dry_run:
-            try:
-                transaction_hash = self._make_trasaction(self._net_id, TRANSFERER_ADDRESS, TRANSFERER_PRIVATE_KEY, *positional_inputs, method_name="batchTransfer")
-                print(f"transaction hash {transaction_hash} generated for batchTransfer")
-            except Exception as e:
-
-            self._await_transaction(transaction_hash)
+            transaction_hash = self._transfer_tokens_impl(*positional_inputs)
         else:
             transaction_hash = 'dry_run'
             print(f"BATCH TRASNFER {positional_inputs}")
