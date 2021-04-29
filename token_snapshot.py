@@ -10,7 +10,7 @@ class Snapshotter():
     def __init__(self,ws_provider):
         self._ws_provider = ws_provider
         self._insert = 'INSERT INTO token_snapshots ' + \
-        '(address, is_contract, balance_in_cogs, block_number, snapshot_date, row_created, row_updated) ' + \
+        '(wallet_address, is_contract, balance_in_cogs, block_number, snapshot_date, row_created, row_updated) ' + \
         'VALUES (%s, %s, %s, 0, current_timestamp, current_timestamp, current_timestamp) ' + \
         'ON DUPLICATE KEY UPDATE balance_in_cogs = %s, row_updated = current_timestamp'
         self._repository = Repository()

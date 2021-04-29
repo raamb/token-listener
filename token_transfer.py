@@ -19,10 +19,10 @@ class TokenTransfer(BlockchainHandler):
         super().__init__(ws_provider)
         self._agi_handler = AGITokenHandler(ws_provider)
         self._contract_name = 'TokenBatchTransfer'
-        self._query = 'SELECT * from token_snapshots where balance_in_cogs > 0 and address not in '  + \
-                       '(SELECT address from transfer_info where transfer_status != \'SUCCESS\') '
+        self._query = 'SELECT * from token_snapshots where balance_in_cogs > 0 and wallet_address not in '  + \
+                       '(SELECT wallet_address from transfer_info where transfer_status != \'SUCCESS\') '
         self._insert = 'INSERT INTO transfer_info ' + \
-        '(address, transfer_fees, transfer_time, transfer_transaction, transfer_status, transfer_amount_in_cogs, row_created, row_updated) ' + \
+        '(wallet_address, transfer_fees, transfer_time, transfer_transaction, transfer_status, transfer_amount_in_cogs, row_created, row_updated) ' + \
         'VALUES (%s, 0, current_timestamp, %s, %s, %s, current_timestamp, current_timestamp) '
         # 'ON DUPLICATE KEY UPDATE balance_in_cogs = %s, row_updated = current_timestamp'
         self._repository = Repository()

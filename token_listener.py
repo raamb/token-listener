@@ -17,7 +17,7 @@ class TokenEventProcessor(BlockchainHandler):
         self._repository = Repository()
         self._contract_name = "SingularityNetToken"
         self._insert = 'INSERT INTO token_snapshots ' + \
-           '(address, balance_in_cogs, block_number, snapshot_date, row_created, row_updated) ' + \
+           '(wallet_address, balance_in_cogs, block_number, snapshot_date, row_created, row_updated) ' + \
            'VALUES (%s, %s, %s, current_timestamp, current_timestamp, current_timestamp) ' + \
            'ON DUPLICATE KEY UPDATE balance_in_cogs = %s, block_number = %s, row_updated = current_timestamp'
         self._insert_values = []
