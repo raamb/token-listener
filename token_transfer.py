@@ -20,7 +20,7 @@ class TokenTransfer(BlockchainHandler):
         self._agi_handler = AGITokenHandler(ws_provider)
         self._contract_name = 'TokenBatchTransfer'
         self._query = 'SELECT * from token_snapshots where balance_in_cogs > 0 and wallet_address not in '  + \
-                       '(SELECT wallet_address from transfer_info where transfer_status != \'SUCCESS\') '
+                       '(SELECT wallet_address from transfer_info where transfer_status = \'SUCCESS\') '
         self._insert = 'INSERT INTO transfer_info ' + \
         '(wallet_address, transfer_fees, transfer_time, transfer_transaction, transfer_status, transfer_amount_in_cogs, row_created, row_updated) ' + \
         'VALUES (%s, 0, current_timestamp, %s, %s, %s, current_timestamp, current_timestamp) '
@@ -72,8 +72,11 @@ class TokenTransfer(BlockchainHandler):
         
         positional_inputs = (addresses, amounts)
         if not self._dry_run:
-            transaction_hash = self._make_trasaction(self._net_id, TRANSFERER_ADDRESS, TRANSFERER_PRIVATE_KEY, *positional_inputs, method_name="batchTransfer")
-            print(f"transaction hash {transaction_hash} generated for batchTransfer")
+            try:
+                transaction_hash = self._make_trasaction(self._net_id, TRANSFERER_ADDRESS, TRANSFERER_PRIVATE_KEY, *positional_inputs, method_name="batchTransfer")
+                print(f"transaction hash {transaction_hash} generated for batchTransfer")
+            except Exception as e:
+
             self._await_transaction(transaction_hash)
         else:
             transaction_hash = 'dry_run'
@@ -95,7 +98,6 @@ class TokenTransfer(BlockchainHandler):
 
         print(f"Processing {len(self._balances)} transfers")
         transaction_hash = self._transfer_tokens()
-        transaction_hash = 'test'
         self._insert_transaction(transaction_hash)
         self._offset += len(self._balances)
         self._balances.clear()
