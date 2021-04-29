@@ -111,7 +111,7 @@ def print_usage():
     print("USAGE: token_transfer.py -n <network_id>")
 
 argv = sys.argv[1:]
-if len(argv) < 3:
+if len(argv) < 2:
     print_usage()
     sys.exit()
 
