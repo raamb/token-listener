@@ -43,11 +43,11 @@ class TokenTransfer(BlockchainHandler):
         self._contract_address = self._blockchain_util.read_contract_address(net_id=self._net_id, path=contract_network_path, key='address')
         return self._contract_address
 
-    def _insert_transaction(self, transaction_hash):
+    def _insert_transaction(self, transaction_hash, status):
         start = time.process_time()
         transaction_data = []
         for address in self._balances:
-            transaction_data.append([address,transaction_hash,'SUCCESS',str(self._balances[address])])
+            transaction_data.append([address,transaction_hash,status,str(self._balances[address])])
         if not self._dry_run:
             self._repository.bulk_query(self._insert, transaction_data)
         print(f"{(time.process_time() - start)} seconds taken to insert transaction")
@@ -64,6 +64,7 @@ class TokenTransfer(BlockchainHandler):
                 self._agi_handler.deposit(address,TOTAL_COGS_TO_TRANSFER, self._net_id)
 
     def _transfer_tokens_impl(self, *positional_inputs):
+        transaction_hash = None
         try:
             transaction_hash = self._make_trasaction(self._net_id, TRANSFERER_ADDRESS, TRANSFERER_PRIVATE_KEY, *positional_inputs, method_name="batchTransfer")
             print(f"transaction hash {transaction_hash} generated for batchTransfer")
@@ -72,11 +73,14 @@ class TokenTransfer(BlockchainHandler):
             error_message = str(e)
             print(f"ERROR {error_message}")
             if('nonce too low' in error_message):
-            #if('transfer amount exceeds balance' in error_message):
                 print("Nonce error - retrying")
                 self._initialize_blockchain()
                 transaction_hash = self._transfer_tokens_impl(*positional_inputs)
             else:
+                status = 'FAILED'
+                if transaction_hash is not None:
+                    status = 'SUBMITTED'
+                self._insert_transaction(transaction_hash, status)
                 raise e
         return transaction_hash
     
@@ -112,7 +116,7 @@ class TokenTransfer(BlockchainHandler):
 
         print(f"Processing {len(self._balances)} transfers")
         transaction_hash = self._transfer_tokens()
-        self._insert_transaction(transaction_hash)
+        self._insert_transaction(transaction_hash,'SUCCESS')
         self._offset += len(self._balances)
         self._balances.clear()
         self._transfer()

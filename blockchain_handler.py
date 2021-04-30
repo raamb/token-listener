@@ -34,18 +34,27 @@ class BlockchainHandler():
             contract=contract, contract_function=method_name, positional_inputs=positional_inputs)
 
     def _await_transaction(self, transaction_hash):
+        retry_count = 30
+        thash = None
+
         while True:
             try:
-                thash = self._blockchain_util.get_transaction(transaction_hash)
+                thash = self._blockchain_util.get_transaction_receipt_from_blockchain(transaction_hash)
             except Exception:
                 print(f"Waiting for {transaction_hash} to come thru")
                 time.sleep(1)
+                retry_count -= 1
+                if retry_count <= 0:
+                    print(f"MINING FAILURE for {transaction_hash}")
+                    raise RuntimeError("MINING FAILURE for " + str(transaction_hash))
                 continue
-
-            if 'blockHash' in thash and thash['blockHash'] is not None:
-                print(f"{thash} mined successfully")
-                break
-            time.sleep(1)
+            if thash is None:
+                print(f"Waiting for {transaction_hash} to be mined")
+                time.sleep(1)
+            else:
+               print(f"MINED {thash}")
+               break
+        return success
 
     def _get_events_from_blockchain(self, net_id, start_block_number, end_block_number):
         contract = self._get_contract(net_id)
