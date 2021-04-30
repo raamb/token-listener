@@ -36,7 +36,7 @@ class BlockchainHandler():
     def _await_transaction(self, transaction_hash):
         retry_count = 30
         thash = None
-
+        
         while True:
             try:
                 thash = self._blockchain_util.get_transaction_receipt_from_blockchain(transaction_hash)
@@ -54,7 +54,7 @@ class BlockchainHandler():
             else:
                print(f"MINED {thash}")
                break
-        return success
+
 
     def _get_events_from_blockchain(self, net_id, start_block_number, end_block_number):
         contract = self._get_contract(net_id)
