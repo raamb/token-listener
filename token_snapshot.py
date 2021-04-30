@@ -40,14 +40,15 @@ class Snapshotter():
                             print("Renewing websocket connection")
                             blockchain_util = BlockChainUtil("WS_PROVIDER", self._ws_provider)
                             contract_code = blockchain_util.get_code(address)
-
                         if len(contract_code) > 3:
                             print(f"Found contract {address}")
                             is_contract = 1
                         balance_in_cogs = Decimal(row[1]) * Decimal(100000000)
                         self._batch_execute([address,is_contract, balance_in_cogs,balance_in_cogs])
                     else:
-                        print("Ignoring " + address) 
+                        print("Ignoring " + address)
+            self._batch_execute([],True)
+            print("BATCH COMPLETED")
 
 def print_usage():
     print("USAGE: token_snapshot.py -i <token_holdings_csv_file>")
