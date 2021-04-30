@@ -18,6 +18,7 @@ class BlockchainHandler():
         return ""
 
     def _initialize_blockchain(self):
+        self.__contract = None
         self._blockchain_util = BlockChainUtil("WS_PROVIDER", self._ws_provider)
 
     def _get_contract(self, net_id):

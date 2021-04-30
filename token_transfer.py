@@ -20,7 +20,7 @@ class TokenTransfer(BlockchainHandler):
         self._agi_handler = AGITokenHandler(ws_provider)
         self._contract_name = 'TokenBatchTransfer'
         self._query = 'SELECT * from token_snapshots where balance_in_cogs > 0 and wallet_address not in '  + \
-                       '(SELECT wallet_address from transfer_info where transfer_status = \'SUCCESS\' and is_contract = 0)  order by balance_in_cogs desc'
+                       '(SELECT wallet_address from transfer_info where transfer_status = \'SUCCESS\' and is_contract = 0)  order by balance_in_cogs desc LIMIT 100'
         self._insert = 'INSERT INTO transfer_info ' + \
         '(wallet_address, transfer_fees, transfer_time, transfer_transaction, transfer_status, transfer_amount_in_cogs, row_created, row_updated) ' + \
         'VALUES (%s, 0, current_timestamp, %s, %s, %s, current_timestamp, current_timestamp) '
@@ -32,7 +32,7 @@ class TokenTransfer(BlockchainHandler):
         self._deposit = False
         self._balances = dict()
         self._batchsize = 100
-        self._offset = 1
+        self._offset = 0
 
     def _get_base_contract_path(self):
         return os.path.abspath(
@@ -67,13 +67,17 @@ class TokenTransfer(BlockchainHandler):
         try:
             transaction_hash = self._make_trasaction(self._net_id, TRANSFERER_ADDRESS, TRANSFERER_PRIVATE_KEY, *positional_inputs, method_name="batchTransfer")
             print(f"transaction hash {transaction_hash} generated for batchTransfer")
+            self._await_transaction(transaction_hash)
         except Exception as e:
             error_message = str(e)
+            print(f"ERROR {error_message}")
             if('nonce too low' in error_message):
+            #if('transfer amount exceeds balance' in error_message):
                 print("Nonce error - retrying")
                 self._initialize_blockchain()
-                self._transfer_tokens_impl(positional_inputs)
-        self._await_transaction(transaction_hash)
+                transaction_hash = self._transfer_tokens_impl(*positional_inputs)
+            else:
+                raise e
         return transaction_hash
     
     def _transfer_tokens(self):
@@ -92,8 +96,10 @@ class TokenTransfer(BlockchainHandler):
         return transaction_hash   
 
     def _transfer(self):
-        limit_query = self._query + " LIMIT " + str(self._batchsize) + " OFFSET " + str(self._offset)
-        token_holders = self._repository.execute(limit_query)
+        #limit_query = self._query + " LIMIT " + str(self._batchsize) + " OFFSET " + str(self._offset)
+        #print(f"Executing {limit_query}")
+        token_holders = self._repository.execute(self._query)
+        print(f"Processing {len(token_holders)} records. Total so far {self._offset}")
         for holder in token_holders:
             address = holder['wallet_address']
             balance_in_cogs = holder['balance_in_cogs']
