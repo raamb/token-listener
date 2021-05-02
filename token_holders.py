@@ -20,7 +20,7 @@ class TokenEventProcessor(BlockchainHandler):
            '(wallet_address, block_number, row_created, row_updated) ' + \
            'VALUES (%s, %s, current_timestamp, current_timestamp) ' + \
            'ON DUPLICATE KEY UPDATE block_number = %s, row_updated = current_timestamp'
-        self._insert_transfer = 'INSERT INTO token_transfers ' + \
+        self._insert_transfer = 'INSERT INTO agi_token_transfers ' + \
            '(from_address, to_address, amount_in_cogs, block_number, row_created, row_updated) ' + \
            'VALUES (%s, %s, %s, %s, current_timestamp, current_timestamp) '   
         self._insert_values = []
