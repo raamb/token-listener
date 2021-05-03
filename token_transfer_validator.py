@@ -10,10 +10,9 @@ from config import INFURA_URL
 
 class TokenTransferValidator(BlockchainHandler):
     def __init__(self, ws_provider, net_id):
-        super().__init__(ws_provider)
+        super().__init__(ws_provider, net_id)
         self._repository = Repository()
         self._contract_name = "SingularityNetToken"
-        self._net_id = net_id
         self._query = 'select * from token_snapshots'
         self._insert = 'INSERT INTO token_transfer_validation ' + \
            '(wallet_address, snapshot_balance_in_cogs, transfer_balance_in_cogs, row_created, row_updated) ' + \
@@ -25,7 +24,7 @@ class TokenTransferValidator(BlockchainHandler):
     def _get_balance(self, address):
         start = time.process_time()
         #address = address.lower()
-        balance = self._call_contract_function("balanceOf", [Web3.toChecksumAddress(address)], self._net_id)
+        balance = self._call_contract_function("balanceOf", [Web3.toChecksumAddress(address)])
         print(f"{(time.process_time() - start)} seconds. Balance of {address} is :: {balance}")
         return balance        
 

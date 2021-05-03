@@ -12,8 +12,8 @@ class TokenEventProcessor(BlockchainHandler):
     BATCH_SIZE = 200
     balances_dict = {}
 
-    def __init__(self, ws_provider, repository=None):
-        super().__init__(ws_provider)
+    def __init__(self, ws_provider, net_id, repository=None):
+        super().__init__(ws_provider, net_id)
         self._repository = Repository()
         self._contract_name = "SingularityNetToken"
         self._insert = 'INSERT INTO token_holders ' + \
@@ -26,10 +26,10 @@ class TokenEventProcessor(BlockchainHandler):
         self._insert_values = []
         self._insert_transfer_values = []
 
-    def _get_balance(self, net_id, address):
+    def _get_balance(self, address):
         start = time.process_time()
         #address = address.lower()
-        balance = self._call_contract_function("balanceOf", [Web3.toChecksumAddress(address)], net_id)
+        balance = self._call_contract_function("balanceOf", [Web3.toChecksumAddress(address)])
         print(f"{(time.process_time() - start)} seconds. Balance of {address} is :: {balance}")
         return balance        
 
@@ -60,7 +60,7 @@ class TokenEventProcessor(BlockchainHandler):
         self._insert_values.append(tuple(values))
 
   
-    def _push_event(self, net_id, block_number, args):
+    def _push_event(self, block_number, args):
         #print(args)
         from_address = str(args["from"]).lower()
         to_address = str(args["to"]).lower()
@@ -74,7 +74,7 @@ class TokenEventProcessor(BlockchainHandler):
         return os.path.abspath(
             os.path.join(os.path.dirname(__file__), 'node_modules', 'singularitynet-token-contracts'))
 
-    def process_events(self, net_id, events):
+    def process_events(self, events):
         #print("Processing events")
         for event in events:
             if 'event' in event:
@@ -82,11 +82,11 @@ class TokenEventProcessor(BlockchainHandler):
                 if event['event'] == "Transfer":
                     print("Transfer of " + str(args['value']) + " cogs from " + str(
                         args["from"] + " to " + str(args["to"])))
-                    self._push_event(net_id, event['blockNumber'], args)
+                    self._push_event(event['blockNumber'], args)
                 else:
                     print("Ignored event " + str(event['event']))
 
-    def read_events(self, net_id, from_block_number):
+    def read_events(self, from_block_number):
         end_block_number = 12347421
         while True:
             to_block_number = from_block_number+int(self.BATCH_SIZE)
@@ -97,9 +97,9 @@ class TokenEventProcessor(BlockchainHandler):
             print(
                 f"reading token event from {from_block_number} to {to_block_number}")
             try:
-                events = self._read_contract_events(net_id,
+                events = self._read_contract_events(
                     from_block_number, to_block_number)
-                self.process_events(net_id, events)
+                self.process_events(events)
                 from_block_number = to_block_number
             except Exception as e:
                 print(f"Excetion {e}. Reinitializing Blockchain")
@@ -140,8 +140,8 @@ try:
     if starting_blocknumber == "" or net_id == 0:
         print_usage()
         sys.exit()
-    tp = TokenEventProcessor(INFURA_URL)
-    tp.read_events(net_id, starting_blocknumber)
+    tp = TokenEventProcessor(INFURA_URL, net_id)
+    tp.read_events(starting_blocknumber)
     print(f"{(time.process_time() - snapshot_start)} seconds taken")  
 except getopt.GetoptError:
     print_usage()

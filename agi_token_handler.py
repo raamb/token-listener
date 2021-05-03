@@ -9,13 +9,21 @@ from config import INFURA_URL, TOTAL_COGS_TO_TRANSFER, TRANSFERER_PRIVATE_KEY, T
 from blockchain_handler import BlockchainHandler
 
 class AGITokenHandler(BlockchainHandler):
-    def __init__(self, ws_provider, repository=None):
-        super().__init__(ws_provider)
+    def __init__(self, ws_provider, net_id, repository=None):
+        super().__init__(ws_provider,net_id)
+        self._repository = Repository()
         self._contract_name = "SingularityNetToken"
 
     def _get_base_contract_path(self):
         return os.path.abspath(
-            os.path.join(os.path.dirname(__file__), 'node_modules', 'singularitynet-token-contracts'))
+            os.path.join(os.path.dirname(__file__), 'node_modules', 'agi-singularitynet-token-contracts'))
+
+    def _get_balance(self, address):
+        start = time.process_time()
+        #address = address.lower()
+        balance = self._call_contract_function("balanceOf", [Web3.toChecksumAddress(address)])
+        print(f"{(time.process_time() - start)} seconds. Balance of {address} is :: {balance}")
+        return balance
 
     def _await_transaction(self, transaction_hash):
         while True:
@@ -26,16 +34,16 @@ class AGITokenHandler(BlockchainHandler):
                 break
             time.sleep(1)
 
-    def _invoke(self, method_name, address, amount_in_cogs,net_id):
+    def _invoke(self, method_name, address, amount_in_cogs):
         print(f"Processing transacton for {method_name} to {address} for {amount_in_cogs}")
         positional_inputs = (Web3.toChecksumAddress(address), amount_in_cogs)
-        transaction_hash = self._make_trasaction(net_id, TRANSFERER_ADDRESS, TRANSFERER_PRIVATE_KEY, *positional_inputs, method_name=method_name)
+        transaction_hash = self._make_trasaction(self._net_id, TRANSFERER_ADDRESS, TRANSFERER_PRIVATE_KEY, *positional_inputs, method_name=method_name)
         print(f"transaction hash {transaction_hash} generated for {method_name} to {address} for {amount_in_cogs}")
         self._await_transaction(transaction_hash)
         return transaction_hash
 
-    def deposit(self, address, amount_in_cogs,net_id):
-        return self._invoke("transfer", address, amount_in_cogs,net_id)
+    def deposit(self, address, amount_in_cogs):
+        return self._invoke("transfer", address, amount_in_cogs)
 
-    def approve_transfer(self, address, amount_in_cogs,net_id):
-        return self._invoke("approve", address, amount_in_cogs,net_id)
+    def approve_transfer(self, address, amount_in_cogs):
+        return self._invoke("approve", address, amount_in_cogs)
