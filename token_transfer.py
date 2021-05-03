@@ -72,16 +72,18 @@ class TokenTransfer(BlockchainHandler):
         except Exception as e:
             error_message = str(e)
             print(f"ERROR {error_message}")
-            #if(transaction_hash is None and 'nonce too low' in error_message):
-            #    print("Nonce error - retrying")
-            #    self._initialize_blockchain()
-            #    transaction_hash = self._transfer_tokens_impl(*positional_inputs)
-            #else:
-            status = 'FAILED'
-            if transaction_hash is not None:
-                status = 'SUBMITTED'
-            self._insert_transaction(transaction_hash, status)
-            raise e
+            if(transaction_hash is None and 'nonce too low' in error_message):
+                print("Nonce error - retrying")
+                self._initialize_blockchain()
+                transaction_hash = self._transfer_tokens_impl(*positional_inputs)
+            else:
+                status = 'FAILED'
+                if transaction_hash is not None:
+                    status = 'SUBMITTED'
+                else:
+                    transaction_hash = 'NOTRANSACTION'
+                self._insert_transaction(transaction_hash, status)
+                raise e
         return transaction_hash
     
     def _transfer_tokens(self):
