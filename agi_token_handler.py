@@ -18,6 +18,9 @@ class AGITokenHandler(BlockchainHandler):
         return os.path.abspath(
             os.path.join(os.path.dirname(__file__), 'node_modules', 'agi-singularitynet-token-contracts'))
 
+    def get_code(self, address):
+        return self._blockchain_util.get_code(address)
+
     def _get_balance(self, address):
         start = time.process_time()
         #address = address.lower()
