@@ -15,6 +15,11 @@ class TokenTransferValidator(BlockchainHandler):
         self._contract_name = "SingularityNetToken"
         self._net_id = net_id
         self._query = 'select * from token_snapshots'
+        self._insert = 'INSERT INTO token_transfer_validation ' + \
+           '(wallet_address, snapshot_balance_in_cogs, transfer_balance_in_cogs, row_created, row_updated) ' + \
+           'VALUES (%s, %s, %s, current_timestamp, current_timestamp) ' + \
+           'ON DUPLICATE KEY UPDATE snapshot_balance_in_cogs = %s, transfer_balance_in_cogs = %s, row_updated = current_timestamp'
+        self._insert_values = []        
         #'(wallet_address, balance_in_cogs, block_number, snapshot_date, row_created, row_updated) ' + \
 
     def _get_balance(self, address):
@@ -28,6 +33,15 @@ class TokenTransferValidator(BlockchainHandler):
         return os.path.abspath(
             os.path.join(os.path.dirname(__file__), 'node_modules', 'singularitynet-token-contracts'))
 
+    def __batch_execute(self, values, force=False):
+        start = time.process_time()
+        number_of_rows = len(self._insert_values)
+        if (force and number_of_rows > 0) or number_of_rows >= 50:
+            self._repository.bulk_query(self._insert, self._insert_values)
+            self._insert_values = []
+            print(f"{(time.process_time() - start)} seconds. Inserted {number_of_rows} rows")
+        self._insert_values.append(tuple(values))
+
     def validate(self):
         records = self._repository.execute(self._query)
         for record in records:
@@ -38,6 +52,8 @@ class TokenTransferValidator(BlockchainHandler):
                 print(f"Balance verified for address {snapshot_address}. Balance is {transferred_balance_in_cogs}")
             else:
                 print(f"FAILURE - Balance does not match for address {snapshot_address}. Transferred Balance is {transferred_balance_in_cogs}, Snapshot Balance is {snapshot_balance_in_cogs}")
+            self.__batch_execute([snapshot_address,snapshot_balance_in_cogs,transferred_balance_in_cogs,snapshot_balance_in_cogs, transferred_balance_in_cogs])
+        self.__batch_execute([],True)
 
 def print_usage():
     print("USAGE: token_transfer_validator.py -n <netwoprk_id>")
