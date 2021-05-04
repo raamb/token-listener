@@ -46,6 +46,7 @@ class Snapshotter():
                     address = str(row[0]).lower()
                     is_contract = 0
                     if address.startswith("0x"):
+                        snapshot_balance_in_cogs = Decimal(row[1]) * 100000000
                         try:
                             contract_code = self._agi_token_handler.get_code(address)
                         except Exception:
@@ -57,6 +58,8 @@ class Snapshotter():
                             print(f"Found contract {address}")
                             is_contract = 1
                         balance_in_cogs = self._agi_token_handler._get_balance(address)
+                        if balance_in_cogs != snapshot_balance_in_cogs:
+                            print(f"BALANCE MISMATCH for {address} Blockchain - {balance_in_cogs} SNAPSHOT - {snapshot_balance_in_cogs}")
                         self._batch_execute([address,is_contract, balance_in_cogs,balance_in_cogs])
                     else:
                         print("Ignoring " + address)
@@ -67,12 +70,9 @@ def print_usage():
     print("USAGE: agi_token_snapshot.py [-d | -i <token_holdings_csv_file>] -n <net_id>")
 
 argv = sys.argv[1:]
-print(argv)
 try:
     snapshot_start = time.process_time()
     opts, args = getopt.getopt(argv,"dh:n:i:",["net-id=","input-file=","dump-balances="])
-    print(opts)
-    print(args)
     net_id = 0
     in_file = None
     dump_balances = False
@@ -93,7 +93,7 @@ try:
     if net_id == 0:
         print_usage()
         sys.exit()
-    print(f"{net_id} {dump_balances} {in_file}")
+    
     if (dump_balances and in_file is not None) or (dump_balances == False and in_file is None):
         print_usage()
         sys.exit()
