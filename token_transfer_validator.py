@@ -15,15 +15,14 @@ class TokenTransferValidator(BlockchainHandler):
         self._contract_name = "SingularityNetToken"
         self._query = 'select * from token_snapshots'
         self._insert = 'INSERT INTO token_transfer_validation ' + \
-           '(wallet_address, snapshot_balance_in_cogs, transfer_balance_in_cogs, row_created, row_updated) ' + \
-           'VALUES (%s, %s, %s, current_timestamp, current_timestamp) ' + \
+           '(wallet_address, is_contract, snapshot_balance_in_cogs, transfer_balance_in_cogs, row_created, row_updated) ' + \
+           'VALUES (%s, %s, %s, %s, current_timestamp, current_timestamp) ' + \
            'ON DUPLICATE KEY UPDATE snapshot_balance_in_cogs = %s, transfer_balance_in_cogs = %s, row_updated = current_timestamp'
         self._insert_values = []        
         #'(wallet_address, balance_in_cogs, block_number, snapshot_date, row_created, row_updated) ' + \
 
     def _get_balance(self, address):
         start = time.process_time()
-        #address = address.lower()
         balance = self._call_contract_function("balanceOf", [Web3.toChecksumAddress(address)])
         print(f"{(time.process_time() - start)} seconds. Balance of {address} is :: {balance}")
         return balance        
@@ -46,12 +45,17 @@ class TokenTransferValidator(BlockchainHandler):
         for record in records:
             snapshot_address = record['wallet_address']
             snapshot_balance_in_cogs = record['balance_in_cogs']
+            is_contract = 0
+            contract_code = self._blockchain_util.get_code(snapshot_address)
+            if len(contract_code) > 3:
+                print(f"Found contract {snapshot_address}")
+                is_contract = 1
             transferred_balance_in_cogs = self._get_balance(snapshot_address)
             if snapshot_balance_in_cogs == transferred_balance_in_cogs:
                 print(f"Balance verified for address {snapshot_address}. Balance is {transferred_balance_in_cogs}")
             else:
                 print(f"FAILURE - Balance does not match for address {snapshot_address}. Transferred Balance is {transferred_balance_in_cogs}, Snapshot Balance is {snapshot_balance_in_cogs}")
-            self.__batch_execute([snapshot_address,snapshot_balance_in_cogs,transferred_balance_in_cogs,snapshot_balance_in_cogs, transferred_balance_in_cogs])
+            self.__batch_execute([snapshot_address,is_contract, snapshot_balance_in_cogs,transferred_balance_in_cogs,snapshot_balance_in_cogs, transferred_balance_in_cogs])
         self.__batch_execute([],True)
 
 def print_usage():
