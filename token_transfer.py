@@ -14,7 +14,7 @@ COMMON_CNTRCT_PATH = os.path.abspath(
      
 #TODO POST DEPLOYMENT
 class TokenTransfer(BlockchainHandler):
-    def __init__(self, ws_provider, net_id, dry_run):
+    def __init__(self, ws_provider, net_id, dry_run, limit_of_transfers):
         super().__init__(ws_provider, net_id)
         self._contract_name = 'TokenBatchTransfer'
         self._query = 'SELECT * from token_snapshots where balance_in_cogs > 0 and is_contract = 0 and wallet_address not in '  + \
@@ -29,6 +29,7 @@ class TokenTransfer(BlockchainHandler):
         self._deposit = False
         self._balances = dict()
         self._batchsize = 100
+        self._limit_of_transfers = limit_of_transfers
         self._offset = 0
 
     def _get_base_contract_path(self):
@@ -89,6 +90,8 @@ class TokenTransfer(BlockchainHandler):
         for address in self._balances:
             addresses.append(Web3.toChecksumAddress(address))
             amounts.append(self._balances[address])
+            if len(address) >= self._limit_of_transfers:
+                break
         
         positional_inputs = (addresses, amounts)
         if not self._dry_run:
@@ -99,8 +102,10 @@ class TokenTransfer(BlockchainHandler):
         return transaction_hash   
 
     def _transfer(self):
-        #limit_query = self._query + " LIMIT " + str(self._batchsize) + " OFFSET " + str(self._offset)
-        #print(f"Executing {limit_query}")
+        if self._limit_of_transfers >= self._offset:
+            print(f"Completed allowed transfers {self._limit_of_transfers}")
+            return
+
         token_holders = self._repository.execute(self._query)
         print(f"Processing {len(token_holders)} records. Total so far {self._offset}")
         for holder in token_holders:
@@ -136,11 +141,12 @@ if len(argv) < 2:
 
 try:
     snapshot_start = time.process_time()
-    opts, args = getopt.getopt(argv,"h:n:d",["input-file="])
+    opts, args = getopt.getopt(argv,"n:d:l:h",["input-file="])
     net_id = 3
     approve=False
     deposit=False
     dry_run=False
+    limit_of_transfers = 5
     for opt, arg in opts:
         print(opt)
         if opt == '-h':
@@ -148,6 +154,8 @@ try:
             sys.exit()
         elif opt in ("-n", "--network_id"):
             net_id = int(arg)
+        elif opt in ("-l","--limit_of_transfers"):
+            limit_of_transfers = int(arg)
         #elif opt in ("-a", "--approve"):
         #    print("Approve")
         #   approve = False
@@ -155,7 +163,9 @@ try:
             print("DRY RUN MODE")
             dry_run = True
     
-    t = TokenTransfer(INFURA_URL,net_id,dry_run)
+    if limit_of_transfers == -1:
+        limit_of_transfers = 100000000000
+    t = TokenTransfer(INFURA_URL,net_id,dry_run, limit_of_transfers)
     t.process_transfer()
     print(f"{(time.process_time() - snapshot_start)} seconds taken") 
 except getopt.GetoptError:
