@@ -98,7 +98,7 @@ class TokenEventProcessor(BlockchainHandler):
                 f"reading token event from {from_block_number} to {to_block_number}")
             try:
                 events = self._read_contract_events(
-                    from_block_number, to_block_number)
+                    from_block_number, to_block_number, 'Transfer', None)
                 self.process_events(events)
                 from_block_number = to_block_number
             except Exception as e:

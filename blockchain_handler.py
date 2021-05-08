@@ -56,23 +56,29 @@ class BlockchainHandler():
                break
 
 
-    def _get_events_from_blockchain(self, start_block_number, end_block_number):
+    def _get_events_from_blockchain(self, start_block_number, end_block_number, event_name, from_address=None):
         contract = self._get_contract()
-        contract_events = contract.events
-        all_blockchain_events = []
+        event_object = getattr(contract.events, event_name)
+        if from_address:
+            transfer_events = event_object.createFilter(fromBlock=start_block_number,
+                                           toBlock=end_block_number, argument_filters={'from': from_address})
+        else:
+            transfer_events = event_object.createFilter(fromBlock=start_block_number,
+                                           toBlock=end_block_number)
+        return transfer_events.get_all_entries()
+        #all_blockchain_events = []
+        #contract_events = contract.events
+        #for attributes in contract_events.abi:
+        #    if attributes['type'] == 'event':
+        #        event_name = attributes['name']
+        #        event_object = getattr(contract.events, event_name)
+        #        blockchain_events = event_object.createFilter(fromBlock=start_block_number,
+        #                                                      toBlock=end_block_number).get_all_entries()
+        #        all_blockchain_events.extend(blockchain_events)
+        #return all_blockchain_events
 
-        for attributes in contract_events.abi:
-            if attributes['type'] == 'event':
-                event_name = attributes['name']
-                event_object = getattr(contract.events, event_name)
-                blockchain_events = event_object.createFilter(fromBlock=start_block_number,
-                                                              toBlock=end_block_number).get_all_entries()
-                all_blockchain_events.extend(blockchain_events)
-
-        return all_blockchain_events
-
-    def _read_contract_events(self, start_block_number, end_block_number):
-        events = self._get_events_from_blockchain(start_block_number, end_block_number)
+    def _read_contract_events(self, start_block_number, end_block_number, event_name, from_address):
+        events = self._get_events_from_blockchain(start_block_number, end_block_number, event_name, from_address)
         print(f"read no of events {len(events)}")
         return events
 

@@ -7,7 +7,6 @@ from repository import Repository
 from decimal import Decimal
 from config import INFURA_URL, TOTAL_COGS_TO_TRANSFER, TRANSFERER_PRIVATE_KEY, TRANSFERER_ADDRESS, TOTAL_COGS_TO_APPROVE
 from blockchain_handler import BlockchainHandler
-from agi_token_handler import AGITokenHandler
 
 COMMON_CNTRCT_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), 'node_modules', 'singularitynet-platform-contracts'))
@@ -17,7 +16,6 @@ COMMON_CNTRCT_PATH = os.path.abspath(
 class TokenTransfer(BlockchainHandler):
     def __init__(self, ws_provider, net_id, dry_run):
         super().__init__(ws_provider, net_id)
-        self._agi_handler = AGITokenHandler(ws_provider, net_id)
         self._contract_name = 'TokenBatchTransfer'
         self._query = 'SELECT * from token_snapshots where balance_in_cogs > 0 and is_contract = 0 and wallet_address not in '  + \
                        '(SELECT wallet_address from transfer_info where transfer_status = \'SUCCESS\')  order by balance_in_cogs desc LIMIT 100'
@@ -51,16 +49,16 @@ class TokenTransfer(BlockchainHandler):
             self._repository.bulk_query(self._insert, transaction_data)
         print(f"{(time.process_time() - start)} seconds taken to insert transaction")
 
-    def _approve_deposit_funds(self):
-        address = self._get_contract_address()
-        if self._approve:
-            print("Approving transfer for address " + str(address))
-            if not self._dry_run:
-                self._agi_handler.approve_transfer(address,TOTAL_COGS_TO_APPROVE)
-        if self._deposit:
-            print("Transfer for address " + str(address))
-            if not self._dry_run:
-                self._agi_handler.deposit(address,TOTAL_COGS_TO_TRANSFER)
+    #def _approve_deposit_funds(self):
+    #    address = self._get_contract_address()
+    #    if self._approve:
+    #        print("Approving transfer for address " + str(address))
+    #        if not self._dry_run:
+    #            self._agi_handler.approve_transfer(address,TOTAL_COGS_TO_APPROVE)
+    #    if self._deposit:
+    #        print("Transfer for address " + str(address))
+    #        if not self._dry_run:
+    #            self._agi_handler.deposit(address,TOTAL_COGS_TO_TRANSFER)
 
     def _transfer_tokens_impl(self, *positional_inputs):
         transaction_hash = None
@@ -124,7 +122,7 @@ class TokenTransfer(BlockchainHandler):
     
     def process_transfer(self):
         print("Transferring for network " + str(self._net_id))
-        self._approve_deposit_funds()
+        #self._approve_deposit_funds()
         self._transfer()
 
 

@@ -17,7 +17,7 @@ class Snapshotter():
         'ON DUPLICATE KEY UPDATE balance_in_cogs = %s, row_updated = current_timestamp'
         self._repository = Repository()
         self._batch_values = []
-        self._agi_token_handler = AGITokenHandler(self._ws_provider,self._net_id)
+        self._agi_token_handler = AGITokenHandler(self._ws_provider,self._net_id,False)
 
     def _batch_execute(self, values, force=False):
         start = time.process_time()
@@ -51,7 +51,7 @@ class Snapshotter():
                             contract_code = self._agi_token_handler.get_code(address)
                         except Exception:
                             print("Renewing websocket connection")
-                            self._agi_token_handler = AGITokenHandler(self._ws_provider,self._net_id)
+                            self._agi_token_handler = AGITokenHandler(self._ws_provider,self._net_id, False)
                             contract_code = self._agi_token_handler.get_code(address)
 
                         if len(contract_code) > 3:

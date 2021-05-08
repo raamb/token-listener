@@ -9,14 +9,18 @@ from config import INFURA_URL, TOTAL_COGS_TO_TRANSFER, TRANSFERER_PRIVATE_KEY, T
 from blockchain_handler import BlockchainHandler
 
 class AGITokenHandler(BlockchainHandler):
-    def __init__(self, ws_provider, net_id, repository=None):
+    def __init__(self, ws_provider, net_id, is_agix):
         super().__init__(ws_provider,net_id)
         self._repository = Repository()
         self._contract_name = "SingularityNetToken"
+        self._contract_path = "agi-singularitynet-token-contracts"
+        if is_agix:
+            self._contract_path = "singularitynet-token-contracts"
+
 
     def _get_base_contract_path(self):
         return os.path.abspath(
-            os.path.join(os.path.dirname(__file__), 'node_modules', 'agi-singularitynet-token-contracts'))
+            os.path.join(os.path.dirname(__file__), 'node_modules', self._contract_path))
 
     def get_code(self, address):
         return self._blockchain_util.get_code(address)

@@ -14,11 +14,9 @@ The schema needed for this to work is in the schema.sql file
 When run with the -d option it dumps the current AGI token balances for each address in the token_snapshots table into a csv file
 When run with the -i option reads the file provided and populates token_snapshots table. Balance for each address is obtained from blockchain
 
-### agi_token_listener.py
-Starts listening for transfer events from the give block number and updates it in the token_snapshots table
+### token_listener.py
+Starts listening for AGI transfer events from the give block number and updates it in the token_snapshots table
+If run with the -v flag then it listens to all AGIX transfers from the given from_address and compares it against the amounts from token_snapshots table
 
 ### token_transfer.py
 Transfers AGIX tokens based on token_snapshots to corresponding addresses using the batch token transfer contract. Transfer details are stored in the transfer_info table
-
-### token_transfer_validator.py
-Validates the AGIX token balance on blockchain against the AGI token balance in token_snapshots
