@@ -90,7 +90,7 @@ class TokenTransfer(BlockchainHandler):
         for address in self._balances:
             addresses.append(Web3.toChecksumAddress(address))
             amounts.append(self._balances[address])
-            if len(address) >= self._limit_of_transfers:
+            if len(amounts) >= self._limit_of_transfers:
                 break
         
         positional_inputs = (addresses, amounts)
@@ -102,10 +102,6 @@ class TokenTransfer(BlockchainHandler):
         return transaction_hash   
 
     def _transfer(self):
-        if self._limit_of_transfers >= self._offset:
-            print(f"Completed allowed transfers {self._limit_of_transfers}")
-            return
-
         token_holders = self._repository.execute(self._query)
         print(f"Processing {len(token_holders)} records. Total so far {self._offset}")
         for holder in token_holders:
@@ -124,6 +120,10 @@ class TokenTransfer(BlockchainHandler):
         self._offset += len(self._balances)
         self._balances.clear()
         self._transfer()
+        
+        if self._offset >= self._limit_of_transfers:
+            print(f"Completed allowed transfers {self._limit_of_transfers}")
+            return
     
     def process_transfer(self):
         print("Transferring for network " + str(self._net_id))
@@ -132,7 +132,7 @@ class TokenTransfer(BlockchainHandler):
 
 
 def print_usage():
-    print("USAGE: token_transfer.py -n <network_id>")
+    print("USAGE: token_transfer.py -n <network_id> [-l <-1|number_of_transfers> -d]")
 
 argv = sys.argv[1:]
 if len(argv) < 2:

@@ -25,8 +25,7 @@ class TokenEventProcessor(AGITokenHandler):
         self._query = 'select wallet_address, balance_in_cogs from token_snapshots where wallet_address in (%s)'
         self._insert_validate = 'INSERT INTO token_transfer_validation ' + \
            '(wallet_address, is_contract, snapshot_balance_in_cogs, transfer_balance_in_cogs, row_created, row_updated) ' + \
-           'VALUES (%s, %s, %s, %s, current_timestamp, current_timestamp) ' + \
-           'ON DUPLICATE KEY UPDATE snapshot_balance_in_cogs = %s, transfer_balance_in_cogs = %s, row_updated = current_timestamp'
+           'VALUES (%s, %s, %s, %s, current_timestamp, current_timestamp) ' 
         self._transfer_amounts = {}
 
     def __batch_execute(self, values, force=False):    
@@ -43,16 +42,24 @@ class TokenEventProcessor(AGITokenHandler):
         if len(values) > 0:
             self._insert_values.append(tuple(values))
 
-    def _validate_and_update(self, block_number, from_address, to_address):
-        to_address_balance = self._get_balance(to_address)
-        self._transfer_amounts[to_address] = to_address_balance
-        if len(self._transfer_amounts) >= 50:
+    def _validate_and_update(self, block_number, from_address, to_address, to_address_balance, force):
+        if to_address is not None:
+            print(f"TRANSFER {from_address} to {to_address} of {to_address_balance} tokens")
+            if to_address in self._transfer_amounts:
+                to_address_balance += self._transfer_amounts[to_address]
+            self._transfer_amounts[to_address] = to_address_balance
+        
+        if (len(self._transfer_amounts) > 0 and force) or len(self._transfer_amounts) >= 50:
             list_of_wallets = self._transfer_amounts.keys()
             format_strings = ','.join(['%s'] * len(list_of_wallets))
-            records = self._repository.execute(self._query % format_strings,tuple(list_of_wallets))
+            select_query = self._query % format_strings
+            print(f"SELECT {select_query}")
+            records = self._repository.execute(select_query,tuple(list_of_wallets))
             for record in records:
                 snapshot_address = record['wallet_address']
                 snapshot_balance_in_cogs = record['balance_in_cogs']
+                to_address_balance = self._transfer_amounts[snapshot_address]
+                
                 is_contract = 0
                 contract_code = self._blockchain_util.get_code(snapshot_address)
                 if len(contract_code) > 3:
@@ -63,7 +70,9 @@ class TokenEventProcessor(AGITokenHandler):
                     print(f"Balance verified for address {snapshot_address}. Balance is {to_address_balance}")
                 else:
                     print(f"FAILURE - Balance does not match for address {snapshot_address}. Transferred Balance is {to_address_balance}, Snapshot Balance is {snapshot_balance_in_cogs}")
-                self.__batch_execute([snapshot_address,is_contract, snapshot_balance_in_cogs,to_address_balance,snapshot_balance_in_cogs, to_address_balance])
+                self.__batch_execute([snapshot_address,is_contract, snapshot_balance_in_cogs,to_address_balance],force)
+                
+            self._transfer_amounts.clear()
 
     def _push_event(self, block_number, from_address, to_address):
         from_address_balance = self._get_balance(from_address)
@@ -90,10 +99,11 @@ class TokenEventProcessor(AGITokenHandler):
                 print(event_args)
                 from_address = str(event_args["from"]).lower()
                 to_address = str(event_args["to"]).lower()
+                value = event_args["value"]
                 block_number = event['blockNumber']
 
                 if self._validate_transfers:
-                    self._validate_and_update(block_number, from_address, to_address)
+                    self._validate_and_update(block_number, from_address, to_address, value, False)
                 else:                   
                     self._update_balances(block_number, from_address, to_address)
 
@@ -102,15 +112,18 @@ class TokenEventProcessor(AGITokenHandler):
         while True:
             to_block_number = from_block_number+int(self.BATCH_SIZE)
             if to_block_number > end_block_number:
-                print("Done with all events")
+                print(f"Done with all events till {end_block_number}")
                 break
 
             print(f"reading token event from {from_block_number} to {to_block_number}")
             events = self._read_contract_events(
                 from_block_number, to_block_number, 'Transfer', from_address)
             self.process_events(events)
-            from_block_number = to_block_number
-        self.__batch_execute([],True) 
+            from_block_number = to_block_number+1
+        if self._validate_transfers:
+            self._validate_and_update(None,None,None,None,True)
+        else:
+            self.__batch_execute([],True) 
         return events
 
 def print_usage():
