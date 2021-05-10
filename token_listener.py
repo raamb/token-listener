@@ -10,7 +10,7 @@ from config import INFURA_URL
 from agi_token_handler import AGITokenHandler
 
 class TokenEventProcessor(AGITokenHandler):
-    BATCH_SIZE = 200
+    BATCH_SIZE = 100
     balances_dict = {}
 
     def __init__(self, ws_provider, net_id,is_agix, validate_transfers):
@@ -25,7 +25,8 @@ class TokenEventProcessor(AGITokenHandler):
         self._query = 'select wallet_address, balance_in_cogs from token_snapshots where wallet_address in (%s)'
         self._insert_validate = 'INSERT INTO token_transfer_validation ' + \
            '(wallet_address, is_contract, snapshot_balance_in_cogs, transfer_balance_in_cogs, row_created, row_updated) ' + \
-           'VALUES (%s, %s, %s, %s, current_timestamp, current_timestamp) ' 
+           'VALUES (%s, %s, %s, %s, current_timestamp, current_timestamp) ' + \
+           'ON DUPLICATE KEY UPDATE row_updated = current_timestamp'
         self._transfer_amounts = {}
 
     def __batch_execute(self, values, force=False):    

@@ -103,7 +103,7 @@ class TokenTransfer(BlockchainHandler):
 
     def _transfer(self):
         token_holders = self._repository.execute(self._query)
-        print(f"Processing {len(token_holders)} records. Total so far {self._offset}")
+        print(f"Processing {len(token_holders)} records. Total so far {self._offset}, limit is {self._limit_of_transfers}")
         for holder in token_holders:
             address = holder['wallet_address']
             balance_in_cogs = holder['balance_in_cogs']
@@ -119,11 +119,13 @@ class TokenTransfer(BlockchainHandler):
         self._insert_transaction(transaction_hash,'SUCCESS')
         self._offset += len(self._balances)
         self._balances.clear()
-        self._transfer()
-        
+       
         if self._offset >= self._limit_of_transfers:
             print(f"Completed allowed transfers {self._limit_of_transfers}")
             return
+        
+        self._transfer()
+
     
     def process_transfer(self):
         print("Transferring for network " + str(self._net_id))
@@ -165,6 +167,7 @@ try:
     
     if limit_of_transfers == -1:
         limit_of_transfers = 100000000000
+    print(f"Transfering tokens with a limit of {limit_of_transfers}")
     t = TokenTransfer(INFURA_URL,net_id,dry_run, limit_of_transfers)
     t.process_transfer()
     print(f"{(time.process_time() - snapshot_start)} seconds taken") 
