@@ -20,7 +20,10 @@ class BlockchainHandler():
 
     def _initialize_blockchain(self):
         self.__contract = None
-        self._blockchain_util = BlockChainUtil("WS_PROVIDER", self._ws_provider)
+        if self._ws_provider.startswith('wss://'):
+            self._blockchain_util = BlockChainUtil("WS_PROVIDER", self._ws_provider)
+        else:
+            self._blockchain_util = BlockChainUtil("HTTP_PROVIDER", self._ws_provider)
 
     def _get_contract(self):
         if not self.__contract:

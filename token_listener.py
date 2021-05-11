@@ -6,7 +6,7 @@ import csv
 from blockchain_util import BlockChainUtil, ContractType
 from repository import Repository
 from web3 import Web3
-from config import INFURA_URL
+from config import INFURA_URL_HTTPS
 from agi_token_handler import AGITokenHandler
 
 class TokenEventProcessor(AGITokenHandler):
@@ -54,7 +54,7 @@ class TokenEventProcessor(AGITokenHandler):
             list_of_wallets = self._transfer_amounts.keys()
             format_strings = ','.join(['%s'] * len(list_of_wallets))
             select_query = self._query % format_strings
-            print(f"SELECT {select_query}")
+            #print(f"SELECT {select_query}")
             records = self._repository.execute(select_query,tuple(list_of_wallets))
             for record in records:
                 snapshot_address = record['wallet_address']
@@ -97,7 +97,7 @@ class TokenEventProcessor(AGITokenHandler):
                 event_args = event['args']
                 #print("Transfer of " + str(args['value']) + " cogs from " + str(
                 #    args["from"] + " to " + str(args["to"])))
-                print(event_args)
+                #print(event_args)
                 from_address = str(event_args["from"]).lower()
                 to_address = str(event_args["to"]).lower()
                 value = event_args["value"]
@@ -168,7 +168,7 @@ try:
         print_usage()
         sys.exit()
 
-    tp = TokenEventProcessor(INFURA_URL,net_id, validate_transfers, validate_transfers)
+    tp = TokenEventProcessor(INFURA_URL_HTTPS,net_id, validate_transfers, validate_transfers)
     tp.read_events(starting_blocknumber, from_address)
     print(f"{(time.process_time() - snapshot_start)} seconds taken")  
 except getopt.GetoptError:
