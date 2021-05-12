@@ -17,8 +17,12 @@ class TokenTransfer(BlockchainHandler):
     def __init__(self, ws_provider, net_id, dry_run, limit_of_transfers):
         super().__init__(ws_provider, net_id)
         self._contract_name = 'TokenBatchTransfer'
+        self._limit_of_transfers = limit_of_transfers
+        offset = 100
+        if self._limit_of_transfers < 100:
+            offset = self._limit_of_transfers
         self._query = 'SELECT * from token_snapshots where balance_in_cogs > 0 and is_contract = 0 and wallet_address not in '  + \
-                       '(SELECT wallet_address from transfer_info where transfer_status = \'SUCCESS\')  order by balance_in_cogs desc LIMIT 100'
+                       '(SELECT wallet_address from transfer_info where transfer_status = \'SUCCESS\')  order by balance_in_cogs desc LIMIT {offset}'.format(offset=offset)
         self._insert = 'INSERT INTO transfer_info ' + \
         '(wallet_address, transfer_fees, transfer_time, transfer_transaction, transfer_status, transfer_amount_in_cogs, row_created, row_updated) ' + \
         'VALUES (%s, 0, current_timestamp, %s, %s, %s, current_timestamp, current_timestamp) '
@@ -29,7 +33,6 @@ class TokenTransfer(BlockchainHandler):
         self._deposit = False
         self._balances = dict()
         self._batchsize = 100
-        self._limit_of_transfers = limit_of_transfers
         self._offset = 0
 
     def _get_base_contract_path(self):
