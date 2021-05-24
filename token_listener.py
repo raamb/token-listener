@@ -71,8 +71,10 @@ class TokenEventProcessor(AGITokenHandler):
                     print(f"Balance verified for address {snapshot_address}. Balance is {to_address_balance}")
                 else:
                     print(f"FAILURE - Balance does not match for address {snapshot_address}. Transferred Balance is {to_address_balance}, Snapshot Balance is {snapshot_balance_in_cogs}")
-                self.__batch_execute([snapshot_address,is_contract, snapshot_balance_in_cogs,to_address_balance],force)
-                
+                self.__batch_execute([snapshot_address,is_contract, snapshot_balance_in_cogs,to_address_balance],False)
+            
+            if force:
+                self.__batch_execute([],True)
             self._transfer_amounts.clear()
 
     def _push_event(self, block_number, from_address, to_address):
