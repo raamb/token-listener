@@ -1,0 +1,25 @@
+{
+  "name": "token-transfer",
+  "version": "1.0.0",
+  "description": "A bunch of utility python scripts to check token balances, transfer tokens and validate transfers.\r The code can be made a lot more efficient but is functional for now as its essentially for one time use.\r The schema needed for this to work is in the schema.sql file",
+  "main": "index.js",
+  "dependencies": {
+    "agi-singularitynet-token-contracts": "^2.0.1",
+    "batch-token-transfer": "^0.1.1",
+    "singularitynet-token-contracts": "^2.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raamb/token-snapshot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/raamb/token-snapshot/issues"
+  },
+  "homepage": "https://github.com/raamb/token-snapshot#readme"
+}

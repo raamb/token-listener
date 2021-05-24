@@ -1,10 +1,6 @@
-import os
 import time
 import sys, getopt
-import csv
 
-from blockchain_util import BlockChainUtil, ContractType
-from repository import Repository
 from web3 import Web3
 from config import INFURA_URL_HTTPS
 from agi_token_handler import AGITokenHandler

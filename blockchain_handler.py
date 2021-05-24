@@ -1,9 +1,6 @@
-import os
-import json
 import time
 
 from blockchain_util import BlockChainUtil
-from web3 import Web3
 
 class BlockchainHandler():
     def __init__(self, ws_provider, net_id, repository=None):

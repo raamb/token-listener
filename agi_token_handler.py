@@ -1,11 +1,10 @@
-import sys, getopt, os
+import os
 import time
-import csv
 from web3 import Web3
 
 from repository import Repository
 from decimal import Decimal
-from config import INFURA_URL, TOTAL_COGS_TO_TRANSFER, TRANSFERER_PRIVATE_KEY, TRANSFERER_ADDRESS, TOTAL_COGS_TO_APPROVE
+from config import TRANSFERER_PRIVATE_KEY, TRANSFERER_ADDRESS
 from blockchain_handler import BlockchainHandler
 
 class AGITokenHandler(BlockchainHandler):
