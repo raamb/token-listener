@@ -10,6 +10,8 @@ CREATE TABLE `token_snapshots` (
   `snapshot_date` timestamp NOT NULL,
   `wallet_address` varchar(50) NOT NULL,
   `is_contract` bit(1) DEFAULT 0,
+  `is_considered` BIT(1) DEFAULT 0,
+  `comment` VARCHAR(256) NULL,
   `row_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `row_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  
   PRIMARY KEY (`row_id`),
