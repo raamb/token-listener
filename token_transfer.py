@@ -3,7 +3,7 @@ import time
 from web3 import Web3
 
 from repository import Repository
-from config import INFURA_URL, TOTAL_COGS_TO_TRANSFER, TRANSFERER_PRIVATE_KEY, TRANSFERER_ADDRESS, TOTAL_COGS_TO_APPROVE
+from config import INFURA_URL, TRANSFERER_PRIVATE_KEY, TRANSFERER_ADDRESS
 from blockchain_handler import BlockchainHandler
 
 COMMON_CNTRCT_PATH = os.path.abspath(
