@@ -1,5 +1,6 @@
 import json
 import uuid
+import math
 from enum import Enum
 
 import web3
@@ -90,7 +91,7 @@ class BlockChainUtil(object):
         print(f"gas_price :: {self.web3_object.eth.gasPrice}")
         print(f"nonce :: {nonce}")
         print(f"positional_inputs :: {positional_inputs}")
-        gas_price = (2 * (self.web3_object.eth.gasPrice))
+        gas_price = math.floor(1.3 * (self.web3_object.eth.gasPrice))
         print(f"gas_price :: {gas_price}")
         options = {
             "from": address,
