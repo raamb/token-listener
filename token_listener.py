@@ -77,31 +77,31 @@ class TokenEventProcessor(AGITokenHandler):
                 self.__batch_execute([],True)
             self._transfer_amounts.clear()
 
-    def _push_event(self, block_number, from_address, to_address):
+    #def _push_event(self, block_number, from_address, to_address):
+    #    from_address_balance = self._get_balance(from_address)
+    #    from_is_contract = self._is_contract(from_address)
+    #    self.__batch_execute([from_address, from_is_contract, from_address_balance, block_number, from_address_balance, block_number]) 
+    #
+    #    to_address_balance = self._get_balance(to_address)
+    #    to_is_contract = self._is_contract(to_address)
+    #    self.__batch_execute([to_address, to_is_contract, to_address_balance, block_number, to_address_balance, block_number]) 
+        
+    def _update_balances(self, block_number, from_address, to_address):
         from_address_balance = self._get_balance(from_address)
         from_is_contract = self._is_contract(from_address)
         self.__batch_execute([from_address, from_is_contract, from_address_balance, block_number, from_address_balance, block_number]) 
 
         to_address_balance = self._get_balance(to_address)
         to_is_contract = self._is_contract(to_address)
-        self.__batch_execute([to_address, to_is_contract, to_address_balance, block_number, to_address_balance, block_number]) 
-        
-    def _update_balances(self, block_number, from_address, to_address):
-        from_address_balance = self._get_balance(from_address)
-        self.__batch_execute([from_address, from_address_balance, block_number, from_address_balance, block_number]) 
-
-        to_address_balance = self._get_balance(to_address)
-        self.__batch_execute([to_address, to_address_balance, block_number, to_address_balance, block_number])               
-        self._push_event(block_number, from_address, to_address)
-        self.__batch_execute([],False)
+        self.__batch_execute([to_address, to_is_contract, to_address_balance, block_number, to_address_balance, block_number])               
+        #self._push_event(block_number, from_address, to_address)
+        #self.__batch_execute([],False)
 
     def process_events(self, events):
         for event in events:
             if 'event' in event:
                 event_args = event['args']
-                #print("Transfer of " + str(args['value']) + " cogs from " + str(
-                #    args["from"] + " to " + str(args["to"])))
-                #print(event_args)
+                
                 from_address = str(event_args["from"]).lower()
                 to_address = str(event_args["to"]).lower()
                 value = event_args["value"]
