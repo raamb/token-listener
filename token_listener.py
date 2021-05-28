@@ -12,8 +12,8 @@ class TokenEventProcessor(AGITokenHandler):
     def __init__(self, ws_provider, net_id,is_agix, validate_transfers):
         super().__init__(ws_provider, net_id,is_agix)
         self._insert_snapshot = 'INSERT INTO token_snapshots ' + \
-           '(wallet_address, balance_in_cogs, block_number, snapshot_date, row_created, row_updated) ' + \
-           'VALUES (%s, %s, %s, current_timestamp, current_timestamp, current_timestamp) ' + \
+           '(wallet_address, is_contract, balance_in_cogs, block_number, snapshot_date, row_created, row_updated) ' + \
+           'VALUES (%s, %s, %s, %s, current_timestamp, current_timestamp, current_timestamp) ' + \
            'ON DUPLICATE KEY UPDATE balance_in_cogs = %s, block_number = %s, row_updated = current_timestamp'
         self._insert_values = []
         self._validate_transfers = validate_transfers
@@ -39,6 +39,14 @@ class TokenEventProcessor(AGITokenHandler):
         if len(values) > 0:
             self._insert_values.append(tuple(values))
 
+    def _is_contract(self, snapshot_address):
+        is_contract = 0
+        contract_code = self._blockchain_util.get_code(snapshot_address)
+        if len(contract_code) > 3:
+            print(f"Found contract {snapshot_address}")
+            is_contract = 1
+        return is_contract
+    
     def _validate_and_update(self, block_number, from_address, to_address, to_address_balance, force):
         if to_address is not None:
             print(f"TRANSFER {from_address} to {to_address} of {to_address_balance} tokens")
@@ -57,11 +65,7 @@ class TokenEventProcessor(AGITokenHandler):
                 snapshot_balance_in_cogs = record['balance_in_cogs']
                 to_address_balance = self._transfer_amounts[snapshot_address]
                 
-                is_contract = 0
-                contract_code = self._blockchain_util.get_code(snapshot_address)
-                if len(contract_code) > 3:
-                    print(f"Found contract {snapshot_address}")
-                    is_contract = 1
+                is_contract = self._is_contract(snapshot_address)
 
                 if snapshot_balance_in_cogs == to_address_balance:
                     print(f"Balance verified for address {snapshot_address}. Balance is {to_address_balance}")
@@ -75,10 +79,12 @@ class TokenEventProcessor(AGITokenHandler):
 
     def _push_event(self, block_number, from_address, to_address):
         from_address_balance = self._get_balance(from_address)
-        self.__batch_execute([from_address, from_address_balance, block_number, from_address_balance, block_number]) 
+        from_is_contract = self._is_contract(from_address)
+        self.__batch_execute([from_address, from_is_contract, from_address_balance, block_number, from_address_balance, block_number]) 
 
         to_address_balance = self._get_balance(to_address)
-        self.__batch_execute([to_address, to_address_balance, block_number, to_address_balance, block_number]) 
+        to_is_contract = self._is_contract(to_address)
+        self.__batch_execute([to_address, to_is_contract, to_address_balance, block_number, to_address_balance, block_number]) 
         
     def _update_balances(self, block_number, from_address, to_address):
         from_address_balance = self._get_balance(from_address)
