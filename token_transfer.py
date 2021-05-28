@@ -144,7 +144,7 @@ if len(argv) < 2:
 
 try:
     snapshot_start = time.process_time()
-    opts, args = getopt.getopt(argv,"n:d:l:h",["input-file="])
+    opts, args = getopt.getopt(argv,"n:l:d",["input-file="])
     net_id = 3
     approve=False
     deposit=False

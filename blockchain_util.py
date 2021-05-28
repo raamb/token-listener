@@ -88,11 +88,16 @@ class BlockChainUtil(object):
     def create_transaction_object(self, net_id, contract_instance, method_name, address, *positional_inputs, gas=None):
         nonce = self.get_nonce(address=address)
 
-        print(f"gas_price :: {self.web3_object.eth.gasPrice}")
+        print(f"Base gas_price :: {self.web3_object.eth.gasPrice}")
         print(f"nonce :: {nonce}")
         print(f"positional_inputs :: {positional_inputs}")
-        gas_price = math.floor(1.3 * (self.web3_object.eth.gasPrice))
-        print(f"gas_price :: {gas_price}")
+        gas_price = math.floor(1.6 * (self.web3_object.eth.gasPrice))
+        print(f"1.6 times gas_price :: {gas_price}")
+        
+        if gas_price < 30000000000:
+            gas_price = 60000000000 #Gas Price as 121 Gwei (121000000000)
+            print(f"Increaed gas_price as threshold breached :: {gas_price}")
+
         options = {
             "from": address,
             "nonce": nonce,
